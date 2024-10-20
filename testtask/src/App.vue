@@ -5,7 +5,7 @@
 
 <template>
   <main>
-    <div id="mess"></div>
+    <Cards/>
   </main>
 </template>
 

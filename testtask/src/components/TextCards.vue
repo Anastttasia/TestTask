@@ -1,7 +1,9 @@
 
 <script setup>
 
-let block = document.getElementById('mess')
+import { ref, onMounted } from 'vue'
+
+let mainBlock = null
 
 function getColor(tone) {
     if (tone == -1) {
@@ -21,24 +23,22 @@ function getColor(tone) {
     }
 }
 
-function createSpanText(divBlock, holeText, sbstrFirst, sbstrSecond, tone) {
-    if (tone == null) {
-        let textElem = document.createElement('span')
-        textElem.textContent = holeText.substring(sbstrFirst, sbstrSecond)
-        divBlock.appendChild(textElem)
-    }
+function createSpanText(textBlock, text, tone) {
+    let textElem = document.createElement('span')
+    textElem.textContent = text
+
     if (tone != null) {
-        let textElem = document.createElement('span')
-        textElem.textContent = holeText.substring(sbstrFirst, sbstrSecond)
         textElem.style.backgroundColor = getColor(tone)
-        divBlock.appendChild(textElem)
     }
+
+    textBlock.appendChild(textElem)
 }
 
 function getInfo(data) {
+
     for (let curBlockIndex = 0; curBlockIndex < data.length; curBlockIndex++) {
-        let divBlock = document.createElement('div')
-        divBlock.style.padding = '1% 2%'
+        let textBlock = document.createElement('div')
+        textBlock.style.padding = '1% 2%'
 
         let hr = document.createElement('hr')
 
@@ -46,50 +46,49 @@ function getInfo(data) {
         textInfo.style.paddingBottom = '1%'
         textInfo.textContent = ` ${data[curBlockIndex].date.substr(0, 10)} / ${data[curBlockIndex].authorName} / ${data[curBlockIndex].authorUrl}`;
 
-        divBlock.appendChild(textInfo)
+        textBlock.appendChild(textInfo)
 
         let holeText = data[curBlockIndex].content
         let textSettings = data[curBlockIndex].contentPostTones
 
-
-
         for (let curSetting = 0; curSetting < textSettings.length; curSetting++) {
 
             if (textSettings.length > 0 && textSettings[0].position > 0) {
-                let textElem = document.createElement('span')
-                textElem.textContent = holeText.substring(0, textSettings[curSetting].position)
-                divBlock.appendChild(textElem)
+                createSpanText(textBlock, holeText.substring(0, textSettings[curSetting].position), null)
             }
 
-            let curPosition = textSettings[curSetting].position
-            let sizeSettings = textSettings[curSetting].length
+            let coloredStart = textSettings[curSetting].position
+            let coloredLength = textSettings[curSetting].length
 
-            createSpanText(divBlock, holeText, curPosition, curPosition + sizeSettings, textSettings[curSetting].tone)
+            createSpanText(textBlock, holeText.substring(coloredStart, coloredStart + coloredLength), textSettings[curSetting].tone)
 
             if (curSetting < textSettings.length - 1) {
-                createSpanText(divBlock, holeText, curPosition + sizeSettings, textSettings[curSetting + 1].position, null)
+                createSpanText(textBlock, holeText.substring(coloredStart + coloredLength, textSettings[curSetting + 1].position), null)
             }
-
-            if ((curSetting == textSettings.length - 1) && (curPosition + sizeSettings) < holeText.length) {
-                createSpanText(divBlock, holeText, curPosition + sizeSettings, holeText.length, null)
+            else if ((coloredStart + coloredLength) < holeText.length) {
+                createSpanText(textBlock, holeText.substring(coloredStart + coloredLength, holeText.length), null)
             }
 
         }
 
-        block.appendChild(divBlock)
-        block.appendChild(hr)
+        mainBlock.appendChild(textBlock)
+        mainBlock.appendChild(hr)
     }
 }
 
-fetch('src/assets/feed.json')
+onMounted(() => {
+    mainBlock = document.getElementById('mainBlock')
+
+    fetch('src/assets/feed.json')
     .then(res => res.json())
     .then(data => getInfo(data))
     .catch(err => console.error('Ошибка:', err))
+})
 
 </script>
 
 <template>
-
+    <div id="mainBlock"></div>
 </template>
 
 <style scoped>
